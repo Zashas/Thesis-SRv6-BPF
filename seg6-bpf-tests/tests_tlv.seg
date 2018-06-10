@@ -1,0 +1,70 @@
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::2 encap seg6local action End.BPF obj tlv_bpf.o section add_ingr dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::3 encap seg6local action End.BPF obj tlv_bpf.o section add_8 dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::4 encap seg6local action End.BPF obj tlv_bpf.o section add_opaq_begin dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::5 encap seg6local action End.BPF obj tlv_bpf.o section add_ingr_no_offset dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::6 encap seg6local action End.BPF obj tlv_bpf.o section add_wrong_offset dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::7 encap seg6local action End.BPF obj tlv_bpf.o section add_6 dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::8 encap seg6local action End.BPF obj tlv_bpf.o section add_ingr_mid dev dum0`
+
+# Adding a Ingress TLV
+> fc00::2 -> fd00::2 / [fc00::14,+fd00::2] / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::2] {Ingr: fc00::1} {Pad: 2} / UDP
+
+> fc00::2 -> fd00::2 / [dead::beef,fc00::14,+fd00::2] / UDP
+< fc00::2 -> fc00::14 / [dead::beef, +fc00::14,fd00::2] {Ingr: fc00::1} {Pad: 2} / UDP
+
+# Adding a Ingress TLV with no offset
+> fc00::2 -> fd00::5 / [fc00::14,+fd00::5] / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::5] {Ingr: fc00::1} {Pad: 2} / UDP
+
+# Adding a Ingress TLV with a wrong offset
+> fc00::2 -> fd00::6 / [fc00::14,+fd00::6] / UDP
+< none
+
+# Adding a Ingress TLV after a 20 bytes TLV
+> fc00::2 -> fd00::8 / [fc00::14,+fd00::8] {Opaq: 00000000000000000000000000000042} {Egr: fc00::dead} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::8] {Opaq: 00000000000000000000000000000042} {Ingr:fc00::beef} {Egr: fc00::dead}  {Pad: 2} / UDP
+
+
+# Adding a NSH TLV on 8 bytes (no pad)
+> fc00::2 -> fd00::3 / [fc00::14,+fd00::3] / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::3] {NSH: 0102030405} / UDP
+
+# Adding a NSH TLV on 6 bytes (pad 2+0)
+> fc00::2 -> fd00::7 / [fc00::14,+fd00::7] / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::7] {NSH: 010203} {Pad: 1} / UDP
+
+# Add an Opaq TLV as first TLV
+> fc00::2 -> fd00::4 / [fc00::14,+fd00::4] / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::4] {Opaq: 00000000000000000000000000000042} {Pad: 2} / UDP
+
+> fc00::2 -> fd00::4 / [fc00::14,+fd00::4] {Egr: fc00::dead} {Pad: 2} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::4] {Opaq: 00000000000000000000000000000042} {Egr: fc00::dead} / UDP
+
+> fc00::2 -> fd00::4 / [fc00::14,+fd00::4] {Opaq: 00000000000000000000000000000042} {Egr: fc00::dead}  / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::4] {Opaq: 00000000000000000000000000000042} {Opaq: 00000000000000000000000000000042} {Egr: fc00::dead} {Pad: 2} / UDP
+
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::10 encap seg6local action End.BPF obj tlv_bpf.o section del_first dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::11 encap seg6local action End.BPF obj tlv_bpf.o section del_20 dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::12 encap seg6local action End.BPF obj tlv_bpf.o section del_24 dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::13 encap seg6local action End.BPF obj tlv_bpf.o section del_24_hmac dev dum0`
+> fc00::2 -> fd00::10 / [fc00::14,+fd00::10] {Ingr: fc00::2} {Pad: 2} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::10] / UDP
+
+> fc00::2 -> fd00::10 / [fc00::14,+fd00::10] {Ingr: fc00::2} {Egr: fc00::dead} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::10] {Egr: fc00::dead} {Pad: 2} / UDP
+
+> fc00::2 -> fd00::10 / [fc00::14,+fd00::10] {NSH: 0102030405} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::10] / UDP
+
+> fc00::2 -> fd00::10 / [fc00::14,+fd00::10] {NSH: 0102} {Pad: 1} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::10] / UDP
+
+> fc00::2 -> fd00::11 / [fc00::14,+fd00::11] {Ingr: fc00::2} {Egr: fc00::dead} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::11] {Ingr: fc00::2} {Pad: 2} / UDP
+
+> fc00::2 -> fd00::11 / [fc00::14,+fd00::11] {Ingr: fc00::2} {Egr: fc00::dead} {Opaq: 00000000000000000000000000000042} {Pad: 2} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::11] {Ingr: fc00::2} {Opaq: 00000000000000000000000000000042} / UDP
+
+> fc00::2 -> fd00::11 / [fc00::14,+fd00::11] {Ingr: fc00::2} {NSH: 01020304050607} {NSH: 08090A0B0C0D0E} {Opaq: 00000000000000000000000000000042} {Pad: 2} / UDP
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::11] {Ingr: fc00::2} {NSH: 08090A0B0C0D0E} {Opaq: 00000000000000000000000000000042} {Pad: 4} / UDP

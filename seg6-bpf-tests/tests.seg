@@ -1,0 +1,122 @@
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::1 encap seg6local action End.BPF obj tests_bpf.o section pass dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::2 encap seg6local action End.BPF obj tests_bpf.o section drop dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::3 encap seg6local action End.BPF obj tests_bpf.o section inc_tag dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::4 encap seg6local action End.BPF obj tests_bpf.o section alert dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::5 encap seg6local action End.BPF obj tests_bpf.o section end_x dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::6 encap seg6local action End.BPF obj tests_bpf.o section end_b6 dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::7 encap seg6local action End.BPF obj tests_bpf.o section end_t dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::8 encap seg6local action End.BPF obj tests_bpf.o section b6_encap_wrong dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::9 encap seg6local action End.BPF obj tests_bpf.o section b6_encap dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::10 encap seg6local action End.BPF obj tests_bpf.o section long_b6_encap dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::12 encap seg6local action End.BPF obj tests_bpf.o section long_b6 dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::17 encap seg6local action End.BPF obj tests_bpf.o section wrong_stores dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::18 encap seg6local action End.BPF obj tests_bpf.o section wrong_adjusts dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::19 encap seg6local action End.BPF obj tests_bpf.o section invalid_hdrlen dev dum0`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::21 encap seg6local action End.BPF obj tests_bpf.o section end_dt6 dev dum0`
+
+if add dum1
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::11 encap bpf in obj tests_bpf.o section push_encap dev dum1`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::13 encap bpf in obj tests_bpf.o section long_encap_inline dev dum1`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::14 encap bpf in obj tests_bpf.o section encap_inline_3seg dev dum1`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::15 encap bpf in obj tests_bpf.o section long_encap_push dev dum1`
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::16 encap bpf in obj tests_bpf.o section push_encap_wrong dev dum1`
+#`/home/math/shared/iproute2/ip/ip -6 route add fd00::20 encap bpf xmit obj tests_bpf.o section push_encap_udp dev dum1`
+
+# Regular IP packets without SRH should be dropped by the seg6local encap
+> fc00::1 -> fd00::1
+< none
+
+# return BPF_OK
+> fc00::2 -> fd00::1 / [fc00::14,+fd00::1] <tag 71>
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::1] <tag 71>
+
+# return BPF_DROP
+> fc00::2 -> fd00::2 / [fc00::14,+fd00::2] <tag 71>
+< none
+
+# Incrementing the tag
+> fc00::2 -> fd00::3 / [fc00::14,+fd00::3] <tag 12>
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::3] <tag 13>
+
+> fc00::2 -> fd00::3 / [fc00::14,+fd00::3] <tag 0>
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::3] <tag 1>
+
+> fc00::2 -> fd00::3 / [fc00::14,+fd00::3] <tag 65535>
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::3] <tag 0>
+
+# Adding the Alert flag to all passing by SRv6 packets
+> fc00::2 -> fd00::4 / [fc00::14,+fd00::4]
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::4] <fl A>
+
+# Dropping if an incorrect store has taken place
+> fc00::2 -> fd00::17 / [fc00::14,+fd00::17]
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::17]
+
+# Dropping if an incorrect adjust has taken place
+> fc00::2 -> fd00::18 / [fc00::14,+fd00::18] {Ingr: fc00::2} {Egr: fc00::dead}
+< fc00::2 -> fc00::14 / [+fc00::14,fd00::18] {Ingr: fc00::2} {Egr: fc00::dead}
+
+
+`ip -6 route add fc42::1 dev dum1`
+
+# Dynamic End.X action
+> fc00::2 -> fd00::5 / [fc00::14,+fd00::5]
+< (dum1) fc00::2 -> fc00::14 / [+fc00::14,fd00::5]
+
+`ip -6 route add dead::1 dev dum0`
+`ip -6 route add table 42 dead::1 dev dum1`
+
+# Dynamic End.T action
+> fc00::2 -> fd00::7 / [fc00::89, dead::1,+fd00::7]
+< (dum1) fc00::2 -> dead::1 / [fc00::89, +dead::1, fd00::7]
+
+> fc00::2 -> fd00::1 / [fc00::89, dead::1,+fd00::1]
+< (dum0) fc00::2 -> dead::1 / [fc00::89, +dead::1, fd00::1]
+
+# Dynamic End.B6 action
+> fc00::21 -> fd00::6 / [fc00::14,+fd00::6]
+< fc00::21 -> fc00::2 / [fc00::14,+fc00::2] / [+fc00::14,fd00::6]
+
+# Dynamic End.B6 action
+> fc00::21 -> fd00::8 / [fc00::14,+fd00::8]
+< none
+
+# Dynamic SRH encapsulation
+`ip sr tunsrc set fd00::41`
+> fc00::21 -> fd00::9 / [fc00::14,+fd00::9]
+< fd00::41 -> fc00::2 / [fc00::1,+fc00::2] / fc00::21 -> fc00::14 / [+fc00::14,fd00::9]
+
+# This time using the LWT in bpf hook
+> fc00::21 -> fd00::20 / TCP(42,42)
+< (dum1) fc00::21 -> fd00::20 / TCP(42,42)
+
+# This time using the LWT xmit bpf hook
+> fc00::21 -> fd00::20 / UDP(10, 10)
+< (dum0) fd00::41 -> fc00::2 / [fc00::1,+fc00::2] / fc00::21 -> fd00::20 / UDP(10, 10)
+
+# Dynamic long SRH encapsulation
+> fc00::21 -> fd00::10 / [fc00::14,+fd00::10] / TCP(42, 42) / "a not too short payload ..."
+< fd00::41 -> fc00::5 / [fc00::1,fc00::2,fc00::3,fc00::4,+fc00::5] / fc00::21 -> fc00::14 / [+fc00::14,fd00::10] / TCP(42, 42) / "a not too short payload ..."
+
+# Dynamic long End.B6 action
+> fc00::21 -> fd00::12 / [fc00::14,+fd00::12] / TCP(42, 42) / "a not too short payload ..."
+< fc00::21 -> fc00::5 / [fc00::14,fc00::2,fc00::3,fc00::4,+fc00::5] / [+fc00::14, fd00::12] / TCP(42, 42) / "a not too short payload ..."
+
+# in the LWT bpf hook now
+> fc00::21 -> fd00::13 / [fc00::14,+fd00::13] / TCP(42, 42) / "a not too short payload ..."
+< fc00::21 -> fc00::5 / [fd00::13,fc00::2,fc00::3,fc00::4,+fc00::5] / [fc00::14, +fd00::13] / TCP(42, 42) / "a not too short payload ..."
+
+> fc00::21 -> fd00::14 / TCP(42, 42) / "This is a HTTPS payload"
+< fc00::21 -> fc00::3 / [fd00::14,fc00::2,+fc00::3] / TCP(42, 42) / "This is a HTTPS payload"
+
+> fc00::21 -> fd00::15
+< fd00::41 -> fc00::5 / [fc00::1,fc00::2,fc00::3,fc00::4,+fc00::5] / fc00::21 -> fd00::15
+
+> fc00::21 -> fd00::16
+< none
+
+> fc00::2 -> fd00::19 / [fc00::14,+fd00::19]
+< none
+
+> fc00::2 -> fd00::21 / [+fd00::21, fd00::1] / fab1::2 -> fc00::1
+< fab1::2 -> fc00::1

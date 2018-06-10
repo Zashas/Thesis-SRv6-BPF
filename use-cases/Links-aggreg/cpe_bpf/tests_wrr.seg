@@ -1,0 +1,44 @@
+`rm /sys/fs/bpf/ip/globals/uplink_wrr_sids` 
+`rm /sys/fs/bpf/ip/globals/uplink_wrr_weights` 
+`rm /sys/fs/bpf/ip/globals/uplink_wrr_state` 
+
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::10 encap bpf in obj uplink_wrr_bpf.o section main dev dum0`
+`./uplink_wrr_usr fc00::0 fc00::a 3 fc00::b 2`
+
+`sleep 1`
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10
+
+> fc00::42 -> fd00::10 
+< fd00::42 -> fc00::a / [fc00::a, ::] / fc00::42 -> fd00::10

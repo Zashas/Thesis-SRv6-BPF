@@ -1,0 +1,23 @@
+`./oam_ecmp.py fd00::beef/128 dum0`
+
+`ip -6 route add dead:beef::8 nexthop via fc00::7 dev dum0`
+`ip -6 route add dead:beef::42 nexthop via fc00::0 dev dum0 nexthop via fe80::23b dev dum0 nexthop via fc00::2 dev dum0`
+`ip -6 route`
+`sleep 1`
+
+# TLV (2 bytes) | OAM req type (1 byte) | OAM special parameters (1 byte) | IPv6 addr (16 bytes)
+# URO 20 bytes
+
+> fc00::49 -> fd00::beef / [baba::1, fc00::1337, +fd00::beef, fc00::49] <fl O> {Type:100 Value: 2a2adeadbeef000000000000000000000008}
+< fc00::49 -> fc00::1337 / [baba::1, +fc00::1337, fd00::beef, fc00::49] <fl O> {Type:100 Value: 2a2adeadbeef000000000000000000000008}
+
+> fc00::49 -> fd00::beef / [baba::1, fc00::1337, +fd00::beef, fc00::49] <fl O> {Type:100 Value: 2a2adeadbeef000000000000000000000042}
+< fc00::49 -> fc00::1337 / [baba::1, +fc00::1337, fd00::beef, fc00::49] <fl O> {Type:100 Value: 2a2adeadbeef000000000000000000000042}
+
+# not in routing table
+> fc00::49 -> fd00::beef / [baba::1, fc00::1337, +fd00::beef, fc00::49] <fl O> {Type:100 Value: 2a2adeadbeef000000000000000000000004}
+< fc00::49 -> fc00::1337 / [baba::1, +fc00::1337, fd00::beef, fc00::49] <fl O> {Type:100 Value: 2a2adeadbeef000000000000000000000004}
+
+
+`sleep 1`
+`pkill -F /tmp/seg6_oam_fd00::beef-128.pid`

@@ -1,0 +1,17 @@
+`rm /sys/fs/bpf/ip/globals/powd_inj_freq_dport`
+`rm /sys/fs/bpf/ip/globals/powd_inj_sids`
+
+if add dum1
+`ip -6 route add fc00::42 encap bpf xmit obj dm_injector_bpf.o sec main headroom 112 dev dum1`
+`ip -6 route`
+
+> fc00::21 -> fc00::42
+< fc00::21 -> fc00::42
+
+`./dm_injector_usr fc00::20:a fc00::20:b 1 fc00::beef 4242`
+
+> fc00::22 -> fc00::42
+< fc00::22 -> fc00::42
+
+> fc00::23 -> fc00::42
+< fc00::23 -> fc00::42

@@ -1,0 +1,9 @@
+[submodule "segway"]
+	path = segway
+	url = https://github.com/Zashas/segway.git
+[submodule "linux-seg6-bpf"]
+	path = linux-seg6-bpf
+	url = https://github.com/Zashas/linux-seg6-bpf.git
+[submodule "openwrt-seg6"]
+	path = openwrt-seg6
+	url = https://github.com/Zashas/openwrt-seg6.git

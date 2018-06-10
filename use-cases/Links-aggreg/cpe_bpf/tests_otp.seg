@@ -1,0 +1,10 @@
+`rm /sys/fs/bpf/ip/globals/end_otp_delta` 
+
+`/home/math/shared/iproute2/ip/ip -6 route add fd00::10 encap seg6local action End.BPF obj end_otp_bpf.o section end_otp dev dum0`
+`echo "userspace"`
+`./end_otp_usr`
+
+`sleep 1`
+
+> fc00::42 -> fd00::10 / [baba::1, fc00::1337, +fd00::10, fab1::49] {Type:7 Value: 00000100000003000000420000003713000000000000000000000000000000000000000000000000000000000000}
+< fc00::42 -> fc00::1337 / [baba::1, +fc00::1337, fd00::10, fab1::49]
