@@ -2,7 +2,7 @@
 `rm /sys/fs/bpf/ip/globals/powd_inj_sids`
 
 if add dum1
-`ip -6 route add fc00::42 encap bpf xmit obj dm_injector_bpf.o sec main headroom 112 dev dum1`
+`ip -6 route add fc00::42 encap bpf out obj dm_injector_bpf.o sec main headroom 112 dev dum1`
 `ip -6 route`
 
 > fc00::21 -> fc00::42
