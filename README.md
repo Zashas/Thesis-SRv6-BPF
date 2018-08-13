@@ -1,5 +1,5 @@
 # Thesis-SRv6-BPF
-Code written for my master's thesis on End.BPF, an interface for programmable IPv6 Segment Routing network functions.
+Code written for my master's thesis on End.BPF, an interface for programmable IPv6 Segment Routing network functions. The full manuscript, including the architecture and performance evaluations of End.BPF and of the three use-cases released in this repository, is available in [Thesis.pdf](Thesis.pdf).
 
 This repository contains:
 
