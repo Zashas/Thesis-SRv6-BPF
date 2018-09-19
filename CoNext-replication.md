@@ -27,3 +27,14 @@ The following [configuration script](https://raw.githubusercontent.com/target0/t
     1. Craft a packet configuration for trafgen, IPv6 UDP 64 bits payload packets from S1 with segments _[R_DM, S2]_ and a valid DM TLV.
     1. Install on R the _End.DM_ program on SID _R\_DM_ using `./end_otp.py R_DM IFOUT`, with `IFOUT` any physical interface.
     1. Use trafgen to generate DM probes from S1. Measure the number of packets per second received on S2.
+
+## Performance evaluation of section 4.2
+
+1. Flash a Turris Omnia with our [OpenWRT `End.BPF` fork](https://github.com/Zashas/openwrt-seg6).
+1. Setup a functional IPv6 network such as described in Figure 1, Setup 2. Enable native SRv6 support `sysctl net.ipv6.conf.all.seg6_enabled=1`, and on the used inbound interfaces: `sysctl net.ipv6.conf.IFACE.seg6_enabled=1`.
+1. Download the files from [use-cases/Links-aggreg](Links-aggreg). Compile the source code in _cpe\_bpf_ using `make`. Configure initial tc netem policies (such as in the [simulation script](use-cases/Links-aggreg/simulation.sh)).
+1. On the Turris Omnia:
+        1. Install the two-way delay measurement function: `ip -6 route add SID-OTP-TURRIS encap seg6local action End.BPF endpoint obj cpe_bpf/end_otp_bpf.o section end_otp dev veth4`
+        1. Install the WRR encapsulation `ip -6 route add default encap bpf in obj cpe_bpf/uplink_wrr_bpf.o section main dev IFACE`, with `IFACE` any physical interface.
+        1. Configure the BPF programs by running `cpe_bpf/end_otp_usr` and `cpe_bpf/uplink_wrr_usr IP6-AGG SEG-LINK1 WEIGHT-LINK1 SEG-LINK2 WEIGHT-LINK2`. `SEG-LINK1/2` are the intermediate segments forcing the usage of a specific link.
+1. On the aggregator: start the aggregation daemon using `./link_aggreg.py SID-OTP-UP SID-OTP-DOWN`
